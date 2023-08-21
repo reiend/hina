@@ -30,8 +30,12 @@ def run_program(executable_name):
 def make_clean_ups():
     subprocess.run(["make", "clean"], cwd=build_dir, shell=True)
 
+def clean_terminal():
+    os.system("cls")
+
 generate_build_files()
 build_with_make()
+# clean_terminal()
 run_program("main.exe")
 # make_clean_ups()
 
