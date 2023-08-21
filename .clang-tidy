@@ -1,0 +1,18 @@
+Checks: >
+  -*,
+    readability-*,
+      magic-numbers,
+
+  modernize-*,
+    use-auto,
+    use-trailing-return-type,
+    avoid-c-arrays,
+    use-nodiscard,
+    loop-convert,
+    pass-by-value,
+    raw-string-literal,
+    return-braced-init-list
+
+CheckOptions:
+  - key: modernize-use-default-member-init.UseAssignment
+    value: 1
