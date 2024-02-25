@@ -1,7 +1,7 @@
 #include <iostream>
 
 auto main() -> int {
-  std::cout << "Hello World \n";
+  std::cout << "Hello world" << 5;
 
   return 0;
 }
