@@ -1,0 +1,5 @@
+CompileFlags:
+  CompilationDatabase: build/       # Search build/ directory for compile_commands.json
+  Add: [-isystem, "C:\\Users\\reiend\\scoop\\apps\\mingw-mstorsjo-llvm-ucrt\\17.0.6-20231128\\include\\c++\\v1"]
+Diagnostics:
+  UnusedIncludes: None
