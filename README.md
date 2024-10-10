@@ -1,1 +1,1 @@
-# hina renderer
+# hina renderering engine
