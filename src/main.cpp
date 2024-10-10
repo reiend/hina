@@ -1,37 +1,13 @@
 #include <iostream>
 
-struct Car {
-  std::string brand;
-  std::string model;
-  int year;
-};
+#include "version.h"
 
-auto main() -> int {
+int main() {
+  std::cout << "version major - " << VERSION_MAJOR << "\n";
+  std::cout << "version minor - " << VERSION_MINOR << "\n";
+  std::cout << "version patch - " << VERSION_PATCH << "\n";
 
-  const short TOYOTA_YEAR = 2018;
-  const short FORD_YEAR = 1969;
-
-  // Allocate memory for Car objects using pointers
-  Car *myCar1 = new Car{"Toyota", "Camry", TOYOTA_YEAR};
-  Car *myCar2 = new Car{"Ford", "Mustang", FORD_YEAR};
-
-  // Print out information about the cars
-  std::cout << "Car 1:" << std::endl;
-  std::cout << "Brand: " << myCar1->brand << std::endl;
-  std::cout << "Model: " << myCar1->model << std::endl;
-  std::cout << "Year: " << myCar1->year << std::endl;
-
-  std::cout << "Car 2:" << std::endl;
-  std::cout << "Brand: " << myCar2->brand << std::endl;
-  std::cout << "Model: " << myCar2->model << std::endl;
-  std::cout << "Year: " << myCar2->year << std::endl;
-
-  // Free memory allocated for Car objects
-  delete myCar1;
-  delete myCar2;
-
-  std::cout << std::endl;
-  system("pause");
+  std::cout << "Hello World\n";
 
   return 0;
 }
