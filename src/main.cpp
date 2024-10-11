@@ -1,13 +1,7 @@
-#include <iostream>
-
-#include "version.h"
+#include "log.h"
 
 int main() {
-  std::cout << "version major - " << VERSION_MAJOR << "\n";
-  std::cout << "version minor - " << VERSION_MINOR << "\n";
-  std::cout << "version patch - " << VERSION_PATCH << "\n";
-
-  std::cout << "Hello World\n";
+  display_project_meta();
 
   return 0;
 }
