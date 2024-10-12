@@ -1,5 +1,4 @@
 build
 .cache
-src/meta/meta.h
 .vs
 out

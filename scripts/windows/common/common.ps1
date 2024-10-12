@@ -13,6 +13,7 @@ $global:BUILD_TYPE = @{
 function Invoke-RunApp {
   param (
     $build_dir = "${global:SOURCE_DIR}\build",
+    $binary_dir = "${global:SOURCE_DIR}\build\bin",
     $source_dir = "${global:SOURCE_DIR}",
     $generator = $global:GENERATOR.NINJA,
     $build_type = $global:BUILD_TYPE.DEBUG
@@ -20,7 +21,7 @@ function Invoke-RunApp {
 
   switch($generator) {
     $global:GENERATOR.NINJA {
-      $build_path_file = "$($build_dir)\hina"
+      $binary_path_file = "${binary_dir}\hina"
 
       try {
         cmake -S $source_dir -B $build_dir -G $generator -DCMAKE_BUILD_TYPE="${build_type}" *> $null
@@ -30,7 +31,7 @@ function Invoke-RunApp {
         }
 
         ninja -C $build_dir
-        & $build_path_file
+        & $binary_path_file
       } catch {
         cmake -S $source_dir -B $build_dir -G $generator -DCMAKE_BUILD_TYPE="${build_type}" --fresh
 
@@ -39,12 +40,12 @@ function Invoke-RunApp {
         }
 
         ninja -C $build_dir
-        & $build_path_file
+        & $binary_path_file
       }
     }
 
     $global:GENERATOR.VISUAL_STUDIO {
-      $build_path_file = "$($build_dir)\${build_type}\hina"
+      $binary_path_file = "${binary_dir}\${build_type}\hina"
 
       try {
         cmake -S $source_dir -B $build_dir -G $GENERATOR *> $null
@@ -55,7 +56,7 @@ function Invoke-RunApp {
 
         cmake --build $build_dir --config "${build_type}"
 
-        & $build_path_file
+        & $binary_path_file
       } catch {
         cmake -S $source_dir -B $build_dir -G $GENERATOR --fresh
 
@@ -64,7 +65,7 @@ function Invoke-RunApp {
         }
 
         cmake --build $build_dir --config "${build_type}"
-        & $build_path_file
+        & $binary_path_file
       }
     }
   }

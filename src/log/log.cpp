@@ -5,6 +5,7 @@
 #include "cmake.h"
 
 void display_project_meta() {
+  std::cout << "hello world";
   std::cout << PROJECT_NAME;
   std::cout << " - v";
   std::cout << PROJECT_VERSION_MAJOR;
