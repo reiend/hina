@@ -1,8 +1,8 @@
-#include "log.h"
+#include "./log.h"
 
 #include <iostream>
 
-#include "meta.h"
+#include "cmake.h"
 
 void display_project_meta() {
   std::cout << PROJECT_NAME;
