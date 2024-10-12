@@ -8,12 +8,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 configure_file(./src/cmake.h.in cmake.h)
 
-message(${files})
+file(GLOB_RECURSE SOURCE_DIR ./src/*.cpp)
+file(GLOB_RECURSE HEADER_DIR ./src/*.h)
+file(GLOB_RECURSE CMAKE_HEADER_DIR ./src/*.h.in)
+
+source_group(
+  TREE 
+  ${CMAKE_SOURCE_DIR} 
+  FILES 
+  ${SOURCE_DIR}
+  ${HEADER_DIR}
+  ${CMAKE_HEADER_DIR}
+)
 
 add_executable(
   ${CMAKE_PROJECT_NAME}
-  ./src/main.cpp
-  ./src/log/log.cpp
+  ${SOURCE_DIR}
 )
 
 target_include_directories(

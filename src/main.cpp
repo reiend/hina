@@ -4,6 +4,7 @@
 
 int main() {
   display_project_meta();
+
   std::cout << "hello world";
 
   return 0;

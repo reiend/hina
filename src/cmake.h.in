@@ -1,5 +1,5 @@
-#ifndef META_H
-#define META_H
+#ifndef CMAKE_H
+#define CMAKE_H
 
 #define PROJECT_NAME "@CMAKE_PROJECT_NAME@"
 #define PROJECT_VERSION_MAJOR "${@CMAKE_PROJECT_NAME@_VERSION_MAJOR}"
