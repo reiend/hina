@@ -23,7 +23,6 @@ pkgs.mkShellNoCC {
     libglvnd
     libglvnd.dev
   ];
-  path = "${pkgs.glfw}";
   shellHook = ''
     mkdir vendor -p
     echo ${pkgs.vulkan-loader}
