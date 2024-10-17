@@ -20,8 +20,25 @@ add_executable(
   ${SOURCE_DIR}
 )
 
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME} 
+  glfw
+  vulkan 
+  GL
+  dl 
+  pthread 
+  X11 
+  Xxf86vm 
+  Xrandr 
+  Xi
+)
+
+message("${PROJECT_VENDOR_DIR}")
+message("${PROJECT_BINARY_DIR}")
 target_include_directories(
   ${CMAKE_PROJECT_NAME} 
   PUBLIC 
   ${PROJECT_BINARY_DIR}
+  # ${PROJECT_VENDOR_DIR}
 )
+
