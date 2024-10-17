@@ -23,19 +23,17 @@ let
       to_lower = pkgs.lib.strings.toLower;
     in
     pkgs.writeShellScriptBin "run_app_${to_lower build_type}" ''
+      rm -rf .cache build
       cmake \
         -S ${source_dir} \
         -B ${build_dir} \
         -G ${generator} \
         -DCMAKE_BUILD_TYPE=${build_type} \
-        -DCMAKE_CXX_FLAGS="-I${pkgs.glfw}/include -I${pkgs.libGL.dev}/include -I${pkgs.glm}/include -I${pkgs.vulkan-headers}/include"
+        --fresh
         ${to_lower generator} -C ${build_dir} 
         ${binary_dir}
     '';
-
 in
-# -DCMAKE_CXX_FLAGS="-I${pkgs.glfw}/include -I${pkgs.glm}/include -I${pkgs.vulkan-headers}/include -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi"
-# -DPROJECT_VENDOR_DIR:STRING="-I${pkgs.glfw}/include -I${pkgs.libGL.dev}/include -I${pkgs.glm}/include -I${pkgs.vulkan-headers}/include"
 {
   run_app_release = run_app rec {
     project_name = "hina";

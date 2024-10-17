@@ -22,23 +22,16 @@ add_executable(
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME} 
-  glfw
-  vulkan 
-  GL
-  dl 
-  pthread 
-  X11 
-  Xxf86vm 
-  Xrandr 
-  Xi
+  ${CMAKE_SOURCE_DIR}/vendor/glfw/lib/libglfw.so
+  ${CMAKE_SOURCE_DIR}/vendor/vulkan_loader/lib/libvulkan.so
 )
 
-message("${PROJECT_VENDOR_DIR}")
-message("${PROJECT_BINARY_DIR}")
 target_include_directories(
   ${CMAKE_PROJECT_NAME} 
   PUBLIC 
   ${PROJECT_BINARY_DIR}
-  # ${PROJECT_VENDOR_DIR}
+  ${CMAKE_SOURCE_DIR}/vendor/glfw/include
+  ${CMAKE_SOURCE_DIR}/vendor/glm/include
+  ${CMAKE_SOURCE_DIR}/vendor/vulkan_header/include
+  ${CMAKE_SOURCE_DIR}/vendor/gl/include
 )
-

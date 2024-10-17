@@ -2,17 +2,6 @@ let
   pkgs = import (fetchTarball "channel:nixos-24.05") { };
 in
 pkgs.mkShellNoCC {
-  test1 = "${pkgs.vulkan-headers}";
-  test2 = "${pkgs.glfw}/include";
-  test3 = "${pkgs.glm}";
-  test4 = "${pkgs.libGL}";
-  test5 = "${pkgs.libGLU}";
-  test6 = "${pkgs.glew}";
-  test7 = "${pkgs.mesa}";
-  test8 = "${pkgs.libglvnd}";
-  test9 = "${pkgs.libglvnd.dev}";
-  test10 = "${pkgs.libGL.dev}";
-  test11 = "${pkgs.clang_18}";
   packages = with pkgs; [
     cmake
     clang_18
@@ -31,9 +20,17 @@ pkgs.mkShellNoCC {
     xorg.libXxf86vm
     xorg.libXrandr
     xorg.libXi
-    libGL
-    libGL.dev
     libglvnd
     libglvnd.dev
   ];
+  path = "${pkgs.glfw}";
+  shellHook = ''
+    mkdir vendor -p
+    echo ${pkgs.vulkan-loader}
+    sudo cp ${pkgs.glfw} ./vendor/glfw -r
+    sudo cp ${pkgs.vulkan-headers} ./vendor/vulkan_header -r
+    sudo cp ${pkgs.vulkan-loader} ./vendor/vulkan_loader -r
+    sudo cp ${pkgs.glm} ./vendor/glm -r
+    sudo cp ${pkgs.libglvnd.dev} ./vendor/gl -r
+  '';
 }
