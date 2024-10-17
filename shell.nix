@@ -25,7 +25,6 @@ pkgs.mkShellNoCC {
   ];
   shellHook = ''
     mkdir vendor -p
-    echo ${pkgs.vulkan-loader}
     sudo cp ${pkgs.glfw} ./vendor/glfw -r
     sudo cp ${pkgs.vulkan-headers} ./vendor/vulkan_header -r
     sudo cp ${pkgs.vulkan-loader} ./vendor/vulkan_loader -r
