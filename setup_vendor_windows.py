@@ -35,7 +35,7 @@ def download_vendor_windows():
       raise RuntimeError("vendor glfw unzip failed: make sure vendor glfw was downloaded")
 
   # download vendor vulkan
-  if not os.path.isdir("./vendor/glfw"):
+  if not os.path.isdir("./vendor/vulkan"):
     try:
       request = urllib.request.Request("https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe")
       request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0')
