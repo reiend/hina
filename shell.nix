@@ -29,7 +29,4 @@ pkgs.mkShellNoCC {
   vendor_vulkan_loader = "${pkgs.vulkan-loader}";
   vendor_glm = "${pkgs.glm}";
   vendor_gl = "${pkgs.libglvnd.dev}";
-  shellHook = ''
-    python ./run.py
-  '';
 }
