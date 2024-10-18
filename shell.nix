@@ -22,13 +22,14 @@ pkgs.mkShellNoCC {
     xorg.libXi
     libglvnd
     libglvnd.dev
+    python3
   ];
+  vendor_glfw = "${pkgs.glfw}";
+  vendor_vulkan_header = "${pkgs.vulkan-headers}";
+  vendor_vulkan_loader = "${pkgs.vulkan-loader}";
+  vendor_glm = "${pkgs.glm}";
+  vendor_gl = "${pkgs.libglvnd.dev}";
   shellHook = ''
-    mkdir vendor -p
-    sudo cp ${pkgs.glfw} ./vendor/glfw -r
-    sudo cp ${pkgs.vulkan-headers} ./vendor/vulkan_header -r
-    sudo cp ${pkgs.vulkan-loader} ./vendor/vulkan_loader -r
-    sudo cp ${pkgs.glm} ./vendor/glm -r
-    sudo cp ${pkgs.libglvnd.dev} ./vendor/gl -r
+    python ./run.py
   '';
 }
