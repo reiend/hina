@@ -55,23 +55,27 @@ def download_vendor_windows():
       subprocess.run("powershell -Command Start-Process ./temp/vulkan/vulkan-sdk.exe -Wait")
 
 def localize_vendor_windows():
-  if not os.path.isdir("./vendor/glfw/include"):
-     shutil.copytree('./temp/glfw-3.4.bin.WIN64/include', './vendor/glfw/include', dirs_exist_ok=True)
+  try:
+    if not os.path.isdir("./vendor/glfw/include"):
+       shutil.copytree('./temp/glfw-3.4.bin.WIN64/include', './vendor/glfw/include', dirs_exist_ok=True)
 
-  if not os.path.isdir("./vendor/glfw/lib"):
-     shutil.copytree('./temp/glfw-3.4.bin.WIN64/lib-vc2022', './vendor/glfw/lib', dirs_exist_ok=True)
+    if not os.path.isdir("./vendor/glfw/lib"):
+       shutil.copytree('./temp/glfw-3.4.bin.WIN64/lib-vc2022', './vendor/glfw/lib', dirs_exist_ok=True)
 
-  if not os.path.isdir("./vendor/vulkan/include"):
-     shutil.copytree('%s/include' % os.environ["VULKAN_SDK"], './vendor/vulkan/include', dirs_exist_ok=True)
-  
-  if not os.path.isdir("./vendor/vulkan/include"):
-     shutil.copytree('%s/include' % os.environ["VULKAN_SDK"], './vendor/vulkan/include', dirs_exist_ok=True)
+    if not os.path.isdir("./vendor/vulkan/include"):
+       shutil.copytree('%s/include' % os.environ["VULKAN_SDK"], './vendor/vulkan/include', dirs_exist_ok=True)
+    
+    if not os.path.isdir("./vendor/vulkan/include"):
+       shutil.copytree('%s/include' % os.environ["VULKAN_SDK"], './vendor/vulkan/include', dirs_exist_ok=True)
 
-  if not os.path.isdir("./vendor/vulkan/Lib"):
-     shutil.copytree('%s/lib' % os.environ["VULKAN_SDK"], './vendor/vulkan/lib', dirs_exist_ok=True)
+    if not os.path.isdir("./vendor/vulkan/Lib"):
+       shutil.copytree('%s/lib' % os.environ["VULKAN_SDK"], './vendor/vulkan/lib', dirs_exist_ok=True)
 
-  if not os.path.isdir("./vendor/glm/include"):
-     shutil.move('./vendor/vulkan/include/glm', './vendor/glm/include/glm')
+    if not os.path.isdir("./vendor/glm/include"):
+       shutil.move('./vendor/vulkan/include/glm', './vendor/glm/include/glm')
+
+  except:
+    raise RuntimeError("vendor localization failed: make sure the vendors are successfully downloaded and installed")
   
 
 check_system_windows()
