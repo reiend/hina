@@ -13,17 +13,25 @@
 #include <cstdint>
 #include <exception>
 #include <iostream>
+#include <vector>
 
 #define STANDARD_VULKAN "0"
 
 class App {
  public:
-  void run() {
-    display_project_meta();
-    init_window();
-    init_vulkan();
-    // main_loop();
-    clean_up();
+  int run() {
+    try {
+      display_project_meta();
+      init_window();
+      init_vulkan();
+      // main_loop();
+      clean_up();
+
+    } catch (const std::exception& e) {
+      std::cerr << e.what() << std::endl;
+      return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
   }
 
  private:
@@ -48,6 +56,7 @@ class App {
   }
 
   void clean_up() {
+    vkDestroyInstance(this->m_vk_instance, nullptr);
     glfwDestroyWindow(this->m_window);
     glfwTerminate();
   }
@@ -80,13 +89,26 @@ class App {
     info.pApplicationInfo = &app;
 
     uint32_t glfw_extension_count = 0;
-    const char** glfw_extension =
+    const char** glfw_extensions =
         glfwGetRequiredInstanceExtensions(&glfw_extension_count);
 
     info.enabledExtensionCount = glfw_extension_count;
-    info.ppEnabledExtensionNames = glfw_extension;
-
+    info.ppEnabledExtensionNames = glfw_extensions;
     info.enabledLayerCount = 0;
+
+    std::vector<const char*> required_extentions;
+
+    for (uint32_t i = 0; i < glfw_extension_count; ++i) {
+      required_extentions.emplace_back(glfw_extensions[i]);
+    }
+
+    required_extentions.emplace_back(
+        VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+
+    info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+
+    info.ppEnabledExtensionNames = required_extentions.data();
+    info.enabledExtensionCount = required_extentions.size();
 
     VkResult result = vkCreateInstance(&info, nullptr, &this->m_vk_instance);
 
@@ -99,22 +121,43 @@ class App {
           "correctly when invoking vkCreateInstance");
     }
 
-    std::cout << "vulkan instance creation success";
+    std::cout << "vulkan instance creation success\n";
+    display_supported_vulkan_extensions();
+  }
+
+  void display_supported_vulkan_extensions() {
+    VkResult result;
+    uint32_t extension_count = 0;
+
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extension_count,
+                                                    nullptr);
+
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error("vulkan get supported extension count failed");
+    }
+
+    std::vector<VkExtensionProperties> extensions(extension_count);
+    result = vkEnumerateInstanceExtensionProperties(nullptr, &extension_count,
+                                                    extensions.data());
+
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error("vulkan get supported extension names failed");
+    }
+
+    std::cout << "Supported Vulkan Extensions\n\n";
+
+    for (const auto& extension : extensions) {
+      std::cout << extension.extensionName << " - " << extension.specVersion
+                << "\n";
+    }
   }
 
   GLFWwindow* m_window;
   VkInstance m_vk_instance;
 };
 
-int run_app() {
-  try {
-    App app;
-    app.run();
-  } catch (const std::exception& e) {
-    std::cerr << e.what() << std::endl;
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
-}
+int main() {
+  App app;
 
-int main() { return run_app(); }
+  return app.run();
+}
