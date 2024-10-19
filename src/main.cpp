@@ -1,20 +1,16 @@
 // local
-#include <sys/types.h>
-
-#include <bit>
-#include <cstdint>
-#include <stdexcept>
-
 #include "cmake.h"
 #include "log/log.h"
-#include "vulkan/vulkan_core.h"
 
 // vendor
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "vulkan/vulkan_core.h"
+
 // std
-#include <cstdlib>
+#include <bit>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 
