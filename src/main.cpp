@@ -121,7 +121,7 @@ class App {
           "correctly when invoking vkCreateInstance");
     }
 
-    std::cout << "vulkan instance creation success\n";
+    std::cout << "vulkan instance creation success\n\n";
     display_supported_vulkan_extensions();
   }
 
@@ -144,12 +144,13 @@ class App {
       throw std::runtime_error("vulkan get supported extension names failed");
     }
 
-    std::cout << "Supported Vulkan Extensions\n\n";
+    std::cout << "Supported Vulkan Extensions\n";
 
     for (const auto& extension : extensions) {
       std::cout << extension.extensionName << " - " << extension.specVersion
                 << "\n";
     }
+    std::cout << "\n";
   }
 
   GLFWwindow* m_window;
