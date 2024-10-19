@@ -18,18 +18,12 @@
 
 class App {
  public:
-  int run() {
-    try {
-      display_project_meta();
-      init_window();
-      init_vulkan();
-      // main_loop();
-      clean_up();
-    } catch (const std::exception& e) {
-      std::cerr << e.what() << std::endl;
-      return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
+  void run() {
+    display_project_meta();
+    init_window();
+    init_vulkan();
+    // main_loop();
+    clean_up();
   }
 
  private:
@@ -112,8 +106,15 @@ class App {
   VkInstance m_vk_instance;
 };
 
-int main() {
-  App app;
-
-  return app.run();
+int run_app() {
+  try {
+    App app;
+    app.run();
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }
+
+int main() { return run_app(); }
