@@ -61,15 +61,15 @@ class App {
   int run() {
     try {
       display_project_meta();
-      init_window();
-      init_vulkan();
-      main_loop();
-      clean_up();
-
+      this->init_window();
+      this->init_vulkan();
+      this->main_loop();
+      this->clean_up();
     } catch (const std::exception& e) {
       std::cerr << e.what() << std::endl;
       return EXIT_FAILURE;
     }
+
     return EXIT_SUCCESS;
   }
 
@@ -81,21 +81,21 @@ class App {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    this->m_window =
+    this->window =
         glfwCreateWindow(WIDTH, HEIGHT, PROJECT_NAME, nullptr, nullptr);
   }
 
   void main_loop() {
-    while (!glfwWindowShouldClose(this->m_window)) {
+    while (!glfwWindowShouldClose(this->window)) {
       glfwPollEvents();
     }
   }
 
   void clean_up() {
-    destroy_debug_utils_messenger_ext(this->m_vk_instance,
-                                      this->m_vk_debug_messenger, nullptr);
-    vkDestroyInstance(this->m_vk_instance, nullptr);
-    glfwDestroyWindow(this->m_window);
+    destroy_debug_utils_messenger_ext(this->vk_instance,
+                                      this->vk_debug_messenger, nullptr);
+    vkDestroyInstance(this->vk_instance, nullptr);
+    glfwDestroyWindow(this->window);
     glfwTerminate();
   }
 
@@ -156,7 +156,7 @@ class App {
       info.pNext = nullptr;
     }
 
-    VkResult result = vkCreateInstance(&info, nullptr, &this->m_vk_instance);
+    VkResult result = vkCreateInstance(&info, nullptr, &this->vk_instance);
 
     if (result != VK_SUCCESS) {
       throw std::runtime_error(
@@ -306,7 +306,7 @@ class App {
     info.pNext = nullptr;
 
     VkResult result = create_debug_utils_messenger_ext(
-        this->m_vk_instance, &info, nullptr, &this->m_vk_debug_messenger);
+        this->vk_instance, &info, nullptr, &this->vk_debug_messenger);
 
     if (result != VK_SUCCESS) {
       throw std::runtime_error(
@@ -333,9 +333,9 @@ class App {
     info.pfnUserCallback = debug_callback;
   }
 
-  GLFWwindow* m_window;
-  VkInstance m_vk_instance;
-  VkDebugUtilsMessengerEXT m_vk_debug_messenger;
+  GLFWwindow* window;
+  VkInstance vk_instance;
+  VkDebugUtilsMessengerEXT vk_debug_messenger;
 };
 
 int main() {
