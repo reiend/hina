@@ -279,23 +279,10 @@ class App {
   }
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL
-  debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
-                 VkDebugUtilsMessageTypeFlagsEXT message_type,
-                 const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
-                 void* p_user_data) {
-    std::cerr << "validation layer: " << p_callback_data->pMessage << std::endl;
-
-    if (message_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    }
-
-    return VK_FALSE;
-  };
-
-  static VKAPI_ATTR VkBool32 VKAPI_CALL
-  debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                VkDebugUtilsMessageTypeFlagsEXT messageType,
-                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                void* pUserData) {
+  debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                 VkDebugUtilsMessageTypeFlagsEXT messageType,
+                 const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                 void* pUserData) {
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
