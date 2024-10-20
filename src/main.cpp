@@ -1,9 +1,7 @@
 // local
-#include <cstring>
-#include <stdexcept>
-
 #include "cmake.h"
 #include "log/log.h"
+#include "vulkan/vk_platform.h"
 
 // vendor
 #define GLFW_INCLUDE_VULKAN
@@ -13,8 +11,10 @@
 // std
 #include <bit>
 #include <cstdint>
+#include <cstring>
 #include <exception>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 #define STANDARD_VULKAN "0"
@@ -30,6 +30,31 @@ const bool enable_validation_layers = false;
 #else
 const bool enable_validation_layers = true;
 #endif
+
+VkResult create_debug_utils_messenger_ext(
+    VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* p_info,
+    const VkAllocationCallbacks* p_allocation_callback,
+    VkDebugUtilsMessengerEXT* p_debug_messenger) {
+  auto create = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+      instance, "vkCreateDebugUtilsMessengerEXT");
+
+  if (create == nullptr) return VK_ERROR_EXTENSION_NOT_PRESENT;
+
+  return create(instance, p_info, p_allocation_callback, p_debug_messenger);
+}
+
+void destroy_debug_utils_messenger_ext(
+    VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger,
+    const VkAllocationCallbacks* p_allocation_callback) {
+  auto destroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+      instance, "vkDestroyDebugUtilsMessengerEXT");
+
+  if (!enable_validation_layers) return;
+
+  if (destroy == nullptr) return;
+
+  destroy(instance, debug_messenger, p_allocation_callback);
+}
 
 class App {
  public:
@@ -67,19 +92,22 @@ class App {
   }
 
   void clean_up() {
+    destroy_debug_utils_messenger_ext(this->m_vk_instance,
+                                      this->m_vk_debug_messenger, nullptr);
     vkDestroyInstance(this->m_vk_instance, nullptr);
     glfwDestroyWindow(this->m_window);
     glfwTerminate();
   }
 
   void init_vulkan() {
-    std::cout << "init vulkan\n";
-    createInstance();
+    std::cout << "init vulkan\n\n";
+    create_instance();
+    create_debug_messenger();
     display_supported_vulkan_extensions();
     display_supported_vulkan_validation_layers();
   }
 
-  void createInstance() {
+  void create_instance() {
     if (enable_validation_layers &&
         !check_supported_vulkan_validation_layers()) {
       throw std::runtime_error(
@@ -105,23 +133,28 @@ class App {
     app.apiVersion = VK_API_VERSION_1_0;
 
     VkInstanceCreateInfo info{};
-
-    if (enable_validation_layers) {
-      info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
-      info.ppEnabledLayerNames = validation_layers.data();
-    } else {
-      info.enabledLayerCount = 0;
-    }
-
     auto extensions = get_required_extensions();
     extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-
     info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     info.pNext = nullptr;
     info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     info.pApplicationInfo = &app;
     info.enabledExtensionCount = extensions.size();
     info.ppEnabledExtensionNames = extensions.data();
+
+    VkDebugUtilsMessengerCreateInfoEXT debug_info{};
+
+    if (enable_validation_layers) {
+      info.enabledLayerCount = static_cast<uint32_t>(validation_layers.size());
+      info.ppEnabledLayerNames = validation_layers.data();
+
+      // added debug issues inside vkCreateIntance and vkDestroyed
+      populate_debug_messenger_create_info(debug_info);
+      info.pNext = &debug_info;
+    } else {
+      info.enabledLayerCount = 0;
+      info.pNext = nullptr;
+    }
 
     VkResult result = vkCreateInstance(&info, nullptr, &this->m_vk_instance);
 
@@ -130,11 +163,11 @@ class App {
           "vulkan instance creation failed: make sure to supply "
           "pVKInstanceCreationInfo "
           "pVKAllocationCallbacks "
-          "pVKInstance"
+          "pVKInstance "
           "correctly when invoking vkCreateInstance");
     }
 
-    std::cout << "vulkan instance creation success\n\n";
+    std::cout << "\nvulkan instance creation success\n\n";
   }
 
   void display_supported_vulkan_extensions() {
@@ -245,8 +278,77 @@ class App {
     return extensions;
   }
 
+  static VKAPI_ATTR VkBool32 VKAPI_CALL
+  debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+                 VkDebugUtilsMessageTypeFlagsEXT message_type,
+                 const VkDebugUtilsMessengerCallbackDataEXT* p_callback_data,
+                 void* p_user_data) {
+    std::cerr << "validation layer: " << p_callback_data->pMessage << std::endl;
+
+    if (message_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    }
+
+    return VK_FALSE;
+  };
+
+  static VKAPI_ATTR VkBool32 VKAPI_CALL
+  debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                VkDebugUtilsMessageTypeFlagsEXT messageType,
+                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                void* pUserData) {
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+    return VK_FALSE;
+  }
+
+  void create_debug_messenger() {
+    if (!enable_validation_layers) return;
+
+    VkDebugUtilsMessengerCreateInfoEXT info{};
+    populate_debug_messenger_create_info(info);
+
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    info.pfnUserCallback = debug_callback;
+    info.pUserData = nullptr;
+    info.pNext = nullptr;
+
+    VkResult result = create_debug_utils_messenger_ext(
+        this->m_vk_instance, &info, nullptr, &this->m_vk_debug_messenger);
+
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error(
+          "vulkan debug messenger creation failed:  make sure to supply "
+          "VkInstance "
+          "pVkDebugUtilsMessengerCreateInfoEXT "
+          "pVkAllocationCallbacks "
+          "pVkDebugUtilsMessengerEXT "
+          "correctly when invoking create_debug_utils_messenger_ext");
+    }
+  }
+
+  void populate_debug_messenger_create_info(
+      VkDebugUtilsMessengerCreateInfoEXT& info) {
+    info = {};
+
+    info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    info.pfnUserCallback = debug_callback;
+  }
+
   GLFWwindow* m_window;
   VkInstance m_vk_instance;
+  VkDebugUtilsMessengerEXT m_vk_debug_messenger;
 };
 
 int main() {
