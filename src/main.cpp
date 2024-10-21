@@ -372,13 +372,14 @@ class App {
       // }
     }
 
-    if ((this->vk_device == VK_NULL_HANDLE) && candidates.rbegin()->first > 0) {
-      std::cout << "\nchosen device - " << candidates.rbegin()->first << "\n";
-      this->vk_device = candidates.rbegin()->second;
-    } else {
+    if (!((this->vk_device == VK_NULL_HANDLE) &&
+          candidates.rbegin()->first > 0)) {
       throw std::runtime_error(
           "vulkan get devices failed: no available device found");
     }
+
+    std::cout << "\nchosen device - " << candidates.rbegin()->first << "\n";
+    this->vk_device = candidates.rbegin()->second;
   }
 
   bool is_device_compatible(VkPhysicalDevice device) {
