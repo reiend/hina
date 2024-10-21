@@ -1,11 +1,14 @@
 // local
+#include <map>
+#include <utility>
+
 #include "cmake.h"
 #include "log/log.h"
-#include "vulkan/vk_platform.h"
 
 // vendor
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
 
 // std
@@ -60,7 +63,11 @@ class App {
  public:
   int run() {
     try {
+      std::cout << "\n";
+      this->display_supported_vulkan_extensions();
+      this->display_supported_vulkan_validation_layers();
       display_project_meta();
+
       this->init_window();
       this->init_vulkan();
       this->main_loop();
@@ -102,9 +109,8 @@ class App {
   void init_vulkan() {
     std::cout << "init vulkan\n\n";
     create_instance();
-    create_debug_messenger();
-    display_supported_vulkan_extensions();
-    display_supported_vulkan_validation_layers();
+    setup_debug_messenger();
+    setup_physical_device();
   }
 
   void create_instance() {
@@ -224,6 +230,7 @@ class App {
     }
 
     std::cout << "\n";
+    std::cout << "\n";
   }
 
   bool check_supported_vulkan_validation_layers() {
@@ -288,7 +295,7 @@ class App {
     return VK_FALSE;
   }
 
-  void create_debug_messenger() {
+  void setup_debug_messenger() {
     if (!enable_validation_layers) return;
 
     VkDebugUtilsMessengerCreateInfoEXT info{};
@@ -333,9 +340,99 @@ class App {
     info.pfnUserCallback = debug_callback;
   }
 
+  void setup_physical_device() {
+    uint32_t device_count = 0;
+    VkResult result =
+        vkEnumeratePhysicalDevices(this->vk_instance, &device_count, nullptr);
+
+    if ((result != VK_SUCCESS) || (device_count == 0)) {
+      throw std::runtime_error(
+          "vulkan get devices failed: no available device found");
+    }
+
+    std::vector<VkPhysicalDevice> devices(device_count);
+
+    result = vkEnumeratePhysicalDevices(this->vk_instance, &device_count,
+                                        devices.data());
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error(
+          "vulkan get devices failed: no available device found");
+    }
+
+    // rank physical device
+    std::multimap<int, VkPhysicalDevice> candidates;
+    for (const auto device : devices) {
+      int score = this->rate_device_compatability(device);
+      candidates.insert(std::make_pair(score, device));
+
+      // default to discrete gpu
+      // if (is_device_compatible(device)) {
+      //   this->vk_device = device;
+      //   break;
+      // }
+    }
+
+    if ((this->vk_device == VK_NULL_HANDLE) && candidates.rbegin()->first > 0) {
+      std::cout << "\nchosen device - " << candidates.rbegin()->first << "\n";
+      this->vk_device = candidates.rbegin()->second;
+    } else {
+      throw std::runtime_error(
+          "vulkan get devices failed: no available device found");
+    }
+  }
+
+  bool is_device_compatible(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties device_properties;
+    VkPhysicalDeviceFeatures device_features;
+
+    vkGetPhysicalDeviceProperties(device, &device_properties);
+    vkGetPhysicalDeviceFeatures(device, &device_features);
+
+    if (!(device_properties.deviceType ==
+              VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+          device_features.geometryShader)) {
+      return false;
+    }
+
+    std::cout << device_properties.deviceType << "\n";
+    std::cout << device_features.geometryShader << "\n";
+
+    return true;
+  }
+
+  int rate_device_compatability(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties device_properties;
+    VkPhysicalDeviceFeatures device_features;
+
+    vkGetPhysicalDeviceProperties(device, &device_properties);
+    vkGetPhysicalDeviceFeatures(device, &device_features);
+
+    int score = 0;
+
+    if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+      score += 1000;
+    }
+
+    score += device_properties.limits.maxImageDimension2D;
+
+    if (!device_features.geometryShader) {
+      return 0;
+    }
+
+    std::cout << "\ndevices # \n";
+    std::cout << "device name - " << device_properties.deviceName << "\n";
+    std::cout << "device type - " << device_properties.deviceType << "\n";
+    std::cout << "has geometery shader - " << device_features.geometryShader
+              << "\n";
+    std::cout << "score - " << score << "\n";
+
+    return score;
+  }
+
   GLFWwindow* window;
   VkInstance vk_instance;
   VkDebugUtilsMessengerEXT vk_debug_messenger;
+  VkPhysicalDevice vk_device = VK_NULL_HANDLE;
 };
 
 int main() {
