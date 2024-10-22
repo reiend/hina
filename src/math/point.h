@@ -4,9 +4,10 @@
 template <typename T, int D>
 class Point {
  public:
-  Point(T x, T y, T z);
-
   int point[D];
+
+  Point(T x, T y);
+  Point(T x, T y, T z);
 };
 
 #endif
