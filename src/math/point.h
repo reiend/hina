@@ -6,7 +6,6 @@ class Point {
  public:
   Point(T x, T y, T z);
 
- private:
   int point[D];
 };
 
