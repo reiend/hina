@@ -14,6 +14,12 @@ def check_system_windows():
 def download_vendor_windows():
   folder = None
 
+  if not os.path.isdir("./temp"):
+    subprocess.run("powershell -Command mkdir temp > $null")
+
+  if not os.path.isdir("./temp/vulkan"):
+    subprocess.run("powershell -Command mkdir ./temp/vulkan > $null")
+
   # download vendor glfw
   if not os.path.isdir("./vendor/glfw"):
     try:
@@ -30,11 +36,12 @@ def download_vendor_windows():
 
     try:
       file = zipfile.ZipFile("./temp/glfw.zip", "r")
-      file.extractall("./temp", "")
+      file.extractall("./temp")
     except:
       raise RuntimeError("vendor glfw unzip failed: make sure vendor glfw was downloaded")
 
-  # download vendor vulkan
+    subprocess.run("powershell -Command Start-Process ./temp/vulkan/vulkan-sdk.exe -Wait")
+
   if not os.path.isdir("./vendor/vulkan"):
     try:
       request = urllib.request.Request("https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe")
@@ -51,8 +58,10 @@ def download_vendor_windows():
       if folder:
         folder.close()
 
-    if not os.path.isdir(os.environ["VULKAN_SDK"]):
-      subprocess.run("powershell -Command Start-Process ./temp/vulkan/vulkan-sdk.exe -Wait")
+    try:
+      os.environ["VULKAN_SDK"]
+    except:
+      subprocess.run("powershell -noexit -Command Start-Process ./temp/vulkan/vulkan-sdk.exe -Wait")
 
 def localize_vendor_windows():
   try:
