@@ -1,5 +1,7 @@
 // local
+#include <ios>
 #include <map>
+#include <optional>
 #include <utility>
 
 #include "cmake.h"
@@ -24,6 +26,11 @@
 
 const uint32_t WIDTH = 1000;
 const uint32_t HEIGHT = 800;
+
+struct QueueFamilies {
+  std::optional<uint32_t> graphics_family;
+  bool has_family() { return this->graphics_family.has_value(); };
+};
 
 const std::vector<const char*> validation_layers = {
     "VK_LAYER_KHRONOS_validation"};
@@ -102,6 +109,7 @@ class App {
     destroy_debug_utils_messenger_ext(this->vk_instance,
                                       this->vk_debug_messenger, nullptr);
     vkDestroyInstance(this->vk_instance, nullptr);
+    vkDestroyDevice(this->vk_device, nullptr);
     glfwDestroyWindow(this->window);
     glfwTerminate();
   }
@@ -111,6 +119,7 @@ class App {
     create_instance();
     setup_debug_messenger();
     setup_physical_device();
+    setup_logical_device();
   }
 
   void create_instance() {
@@ -286,11 +295,11 @@ class App {
   }
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL
-  debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                 VkDebugUtilsMessageTypeFlagsEXT messageType,
-                 const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+  debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
+                 VkDebugUtilsMessageTypeFlagsEXT message_type,
+                 const VkDebugUtilsMessengerCallbackDataEXT* callback_data,
                  void* pUserData) {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    std::cerr << "validation layer: " << callback_data->pMessage << std::endl;
 
     return VK_FALSE;
   }
@@ -365,6 +374,10 @@ class App {
       int score = this->rate_device_compatability(device);
       candidates.insert(std::make_pair(score, device));
 
+      // if (family.graphics_family.has_value()) {
+      //   continue;
+      // };
+
       // default to discrete gpu
       // if (is_device_compatible(device)) {
       //   this->vk_device = device;
@@ -372,22 +385,33 @@ class App {
       // }
     }
 
-    if (!((this->vk_device == VK_NULL_HANDLE) &&
+    if (!((this->vk_physical_device == VK_NULL_HANDLE) &&
           candidates.rbegin()->first > 0)) {
       throw std::runtime_error(
           "vulkan get devices failed: no available device found");
     }
 
     std::cout << "\nchosen device - " << candidates.rbegin()->first << "\n";
-    this->vk_device = candidates.rbegin()->second;
+
+    QueueFamilies families = find_queue_families(candidates.rbegin()->second);
+
+    if (!families.has_family()) {
+      throw std::runtime_error(
+          "vulkan get devices failed: no supported queue family");
+    }
+
+    std::cout << "chosen device has supported queue family\n";
+
+    this->vk_physical_device = candidates.rbegin()->second;
   }
 
-  bool is_device_compatible(VkPhysicalDevice device) {
+  bool is_device_compatible(VkPhysicalDevice physical_device) {
     VkPhysicalDeviceProperties device_properties;
     VkPhysicalDeviceFeatures device_features;
+    QueueFamilies family = find_queue_families(physical_device);
 
-    vkGetPhysicalDeviceProperties(device, &device_properties);
-    vkGetPhysicalDeviceFeatures(device, &device_features);
+    vkGetPhysicalDeviceProperties(physical_device, &device_properties);
+    vkGetPhysicalDeviceFeatures(physical_device, &device_features);
 
     if (!(device_properties.deviceType ==
               VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
@@ -398,15 +422,15 @@ class App {
     std::cout << device_properties.deviceType << "\n";
     std::cout << device_features.geometryShader << "\n";
 
-    return true;
+    return family.graphics_family.has_value();
   }
 
-  int rate_device_compatability(VkPhysicalDevice device) {
+  int rate_device_compatability(VkPhysicalDevice physical_device) {
     VkPhysicalDeviceProperties device_properties;
     VkPhysicalDeviceFeatures device_features;
 
-    vkGetPhysicalDeviceProperties(device, &device_properties);
-    vkGetPhysicalDeviceFeatures(device, &device_features);
+    vkGetPhysicalDeviceProperties(physical_device, &device_properties);
+    vkGetPhysicalDeviceFeatures(physical_device, &device_features);
 
     int score = 0;
 
@@ -430,10 +454,86 @@ class App {
     return score;
   }
 
+  QueueFamilies find_queue_families(VkPhysicalDevice physical_device) {
+    QueueFamilies families;
+
+    uint32_t family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &family_count,
+                                             nullptr);
+
+    std::vector<VkQueueFamilyProperties> family_properties(family_count);
+
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &family_count,
+                                             family_properties.data());
+
+    std::cout << "Supported Queue Families\n";
+    for (const auto family_property : family_properties) {
+      std::cout << family_property.queueFlags << " - "
+                << family_property.queueCount << "\n";
+    }
+
+    int family_counter = 0;
+    for (const auto family_property : family_properties) {
+      if (families.has_family()) {
+        break;
+      }
+
+      if (family_property.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        families.graphics_family = family_counter;
+      }
+
+      ++family_counter;
+    }
+
+    return families;
+  }
+
+  void setup_logical_device() {
+    QueueFamilies families = find_queue_families(this->vk_physical_device);
+
+    if (!families.has_family()) {
+      throw std::runtime_error(
+          "vulkan get devices failed: no supported queue family");
+    }
+
+    float queue_priority = 1.0f;
+    VkDeviceQueueCreateInfo queue_info;
+    queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queue_info.queueFamilyIndex = families.graphics_family.value();
+    queue_info.queueCount = 1;
+    queue_info.pQueuePriorities = &queue_priority;
+
+    VkPhysicalDeviceFeatures physical_device_features;
+
+    VkDeviceCreateInfo device_info;
+    device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    device_info.pQueueCreateInfos = &queue_info;
+    device_info.queueCreateInfoCount = queue_info.queueCount;
+    device_info.pEnabledFeatures = &physical_device_features;
+
+    VkResult result = vkCreateDevice(this->vk_physical_device, &device_info,
+                                     nullptr, &this->vk_device);
+
+    if (result != VK_SUCCESS) {
+      throw std::runtime_error(
+          "vulkan logical device creation failed: make sure to supply "
+          "VkPhysicalDevice "
+          "VkDeviceCreationInfo "
+          "VkAllocationCallBacks "
+          "VkDevice "
+          "correctly when invoking vkCreateInstance");
+    }
+
+    vkGetDeviceQueue(this->vk_device, families.graphics_family.value(), 0,
+                     &this->vk_queue);
+  }
+
   GLFWwindow* window;
   VkInstance vk_instance;
   VkDebugUtilsMessengerEXT vk_debug_messenger;
-  VkPhysicalDevice vk_device = VK_NULL_HANDLE;
+  VkPhysicalDevice vk_physical_device = VK_NULL_HANDLE;
+  VkDevice vk_device;
+  VkQueue vk_queue;
 };
 
 int main() {
